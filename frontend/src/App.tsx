@@ -1,25 +1,47 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { DashboardView } from './views/DashboardView';
+import { QuizView } from './views/QuizView';
+import { QuizResultView } from './views/QuizResultView';
+import { checkQuizCompleted } from './lib/session';
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-8">
-      <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-        Ceryle
-      </h1>
-      <p className="text-gray-400 text-lg mb-8 text-center max-w-md">
-        Plataforma de adopcion de IA Generativa con Memoria de Largo Plazo
-      </p>
-      <div className="flex gap-4">
-        <button className="px-6 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition-colors">
-          Modo Aula
-        </button>
-        <button className="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition-colors">
-          Modo Co-creador
-        </button>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/quiz" element={<QuizView />} />
+        <Route path="/quiz/result" element={<QuizResultView />} />
+        <Route path="/chat" element={<DashboardView />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+/**
+ * Componente de redirección en la raíz.
+ * Si el usuario ya completó el quiz → /chat
+ * Si no → /quiz
+ */
+function RootRedirect() {
+  const [target, setTarget] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkQuizCompleted().then((result) => {
+      setTarget(result ? '/chat' : '/quiz');
+    });
+  }, []);
+
+  if (!target) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="animate-pulse text-gray-400">Loading...</div>
       </div>
-      <p className="mt-12 text-gray-600 text-sm">
-        Backend: FastAPI + LangChain | Frontend: React + Tailwind
-      </p>
-    </div>
-  )
+    );
+  }
+
+  return <Navigate to={target} replace />;
 }
 
 export default App

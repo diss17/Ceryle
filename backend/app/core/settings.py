@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3"
 
+    # --- Base de Datos ---
+    database_url: str = "sqlite+aiosqlite:///./ceryle.db"
+
     # --- Aplicación ---
     app_env: str = "development"
     log_level: str = "info"

@@ -15,8 +15,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.db import init_db
 from app.models.schemas import HealthResponse
-from app.routers import chat
+from app.routers import chat, learning_path, quiz, session, topic_chat
 
 # ─── Configuración de Logging ───────────────────────────────────────────────
 logging.basicConfig(
@@ -24,6 +25,11 @@ logging.basicConfig(
     format="%(asctime)s │ %(levelname)-8s │ %(name)s │ %(message)s",
     datefmt="%H:%M:%S",
 )
+
+# Silenciar el ruido HTTP de bajo nivel (GET/POST/DELETE request lines,
+# incluyendo los 405 inofensivos del cleanup de sesiones MCP).
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +58,10 @@ app.add_middleware(
 
 # ─── Registrar Routers ─────────────────────────────────────────────────────
 app.include_router(chat.router)
+app.include_router(quiz.router)
+app.include_router(learning_path.router)
+app.include_router(topic_chat.router)
+app.include_router(session.router)
 
 # ─── Health Check ───────────────────────────────────────────────────────────
 
@@ -75,7 +85,10 @@ async def health_check() -> HealthResponse:
 
 @app.on_event("startup")
 async def on_startup():
-    """Log informativo al iniciar el servidor."""
+    """Inicializa la base de datos y loguea la configuración."""
+    # Crear tablas si no existen
+    await init_db()
+
     model_info = (
         f"Ollama ({settings.ollama_model}) en {settings.ollama_base_url}"
         if settings.use_local_model
@@ -85,4 +98,5 @@ async def on_startup():
     logger.info("🐦 Ceryle API iniciada")
     logger.info(f"   Entorno: {settings.app_env}")
     logger.info(f"   Modelo:  {model_info}")
+    logger.info(f"   DB:      {settings.database_url}")
     logger.info("=" * 50)

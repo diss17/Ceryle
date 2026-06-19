@@ -53,3 +53,39 @@ class HealthResponse(BaseModel):
 
     status: str = "ok"
     environment: str = "development"
+
+
+# ─── Quiz Schemas ───────────────────────────────────────────────────────────
+
+
+class QuizQuestionOut(BaseModel):
+    """Una pregunta del quiz (sin revelar pesos/respuestas correctas)."""
+
+    id: str
+    text: str
+    options: list[str]
+
+
+class QuizSubmitRequest(BaseModel):
+    """Cuerpo de la petición POST /quiz/submit."""
+
+    session_id: str = Field(
+        ...,
+        min_length=36,
+        max_length=36,
+        description="UUID de la sesión anónima del usuario.",
+    )
+    answers: dict[str, int] = Field(
+        ...,
+        description="Respuestas del usuario: {question_id: índice_opción_seleccionada}.",
+    )
+
+
+class QuizResultResponse(BaseModel):
+    """Respuesta con el resultado del quiz."""
+
+    session_id: str
+    level: str = Field(..., description="Nivel calculado: beginner, intermediate, advanced.")
+    score: int
+    total: int
+    description: str = Field(..., description="Descripción del nivel para el usuario.")
